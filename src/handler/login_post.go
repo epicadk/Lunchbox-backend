@@ -1,0 +1,58 @@
+package handler
+
+import (
+	"context"
+	"log"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+//LoginPost Handles post Request to Login Endpoint
+func LoginPost(c *gin.Context) {
+	username := c.PostForm("username")
+	password := c.PostForm("password")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
+		"//Add Mongo URI HERE",
+	))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Checking if user Exists
+	var user User
+	collection := client.Database("Lunchbox").Collection("Users")
+	err = collection.FindOne(ctx, User{Username: username}).Decode(&user)
+
+	if err != nil || user.Username == "" {
+		c.AbortWithStatusJSON(400, gin.H{
+			"message": "Username does not exist",
+		})
+		return
+	}
+
+	if user.Password != password {
+		c.AbortWithStatusJSON(400, gin.H{
+			"message": "Password incorrect",
+		})
+		return
+	}
+	token, err := GenerateJWT(user.ID.Hex())
+
+	if err != nil {
+		c.AbortWithStatusJSON(400, gin.H{
+			"message": "Internal Server Error",
+		})
+		log.Fatal(err.Error())
+	}
+
+	c.JSON(200, gin.H{
+		"token": token,
+		"id":    user.ID,
+	})
+}
