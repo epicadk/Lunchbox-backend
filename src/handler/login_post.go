@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -18,7 +19,8 @@ func LoginPost(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
-		"//Add Mongo URI HERE",
+		//Add mongodb URI here
+		"",
 	))
 	if err != nil {
 		log.Fatal(err)
@@ -53,6 +55,23 @@ func LoginPost(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"token": token,
-		"id":    user.ID,
 	})
+}
+
+//GenerateJWT generates JWT token
+func GenerateJWT(id string) (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	claims := token.Claims.(jwt.MapClaims)
+	claims["authorized"] = true
+	claims["client"] = id
+	claims["exp"] = time.Now().Add(time.Minute * 30).Unix()
+	//TODO add secret here
+	tokenString, err := token.SignedString([]byte("mysecret"))
+
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }

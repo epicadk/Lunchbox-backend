@@ -3,9 +3,9 @@ package handler
 import (
 	"context"
 	"log"
+	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -41,7 +41,8 @@ func SignupPost(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
-		"//Add Mongo URI here",
+		//add mongodb URI here
+		"",
 	))
 	if err != nil {
 		log.Fatal(err)
@@ -52,7 +53,7 @@ func SignupPost(c *gin.Context) {
 	collection := client.Database("Lunchbox").Collection("Users")
 	err = collection.FindOne(ctx, User{Username: username}).Decode(&user)
 	if err == nil {
-		c.AbortWithStatusJSON(400, gin.H{
+		c.AbortWithStatusJSON(http.StatusConflict, gin.H{
 			"message": "Username exists",
 		})
 		return
@@ -63,40 +64,23 @@ func SignupPost(c *gin.Context) {
 	user.Password = password
 	result, err := collection.InsertOne(ctx, user)
 	if err != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"message": "Internal Server Error",
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": http.StatusText(http.StatusInternalServerError),
 		})
 		return
 	}
-	token, err := GenerateJWT(result.InsertedID.(primitive.ObjectID).String())
+
+	//Generate Auth Token For current User
+	token, err := GenerateJWT(result.InsertedID.(primitive.ObjectID).Hex())
 	if err != nil {
 		c.AbortWithStatusJSON(400, gin.H{
 			"message": err.Error(),
 		})
 		return
 	}
-	c.JSON(200, gin.H{
-		"message":    user.Username,
-		"password":   user.Password,
-		"repassword": repassword,
-		"id":         token,
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "User was created successfully.",
+		"id":      token,
 	})
-}
-
-//GenerateJWT generates JWT token
-func GenerateJWT(id string) (string, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
-
-	claims := token.Claims.(jwt.MapClaims)
-	claims["authorized"] = true
-	claims["client"] = id
-	claims["exp"] = time.Now().Add(time.Minute * 30).Unix()
-	//TODO add secret here
-	tokenString, err := token.SignedString([]byte("//Add Secret Here"))
-
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
 }
