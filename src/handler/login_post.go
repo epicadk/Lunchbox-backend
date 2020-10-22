@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/crypto/bcrypt"
 )
 
 //LoginPost Handles post Request to Login Endpoint
@@ -34,11 +35,12 @@ func LoginPost(c *gin.Context) {
 	if err != nil || user.Username == "" {
 		c.AbortWithStatusJSON(400, gin.H{
 			"message": "Username does not exist",
+			"error":   err.Error(),
 		})
 		return
 	}
 
-	if user.Password != password {
+	if !comparePasswords(user.Password, password) {
 		c.AbortWithStatusJSON(400, gin.H{
 			"message": "Password incorrect",
 		})
@@ -74,4 +76,13 @@ func GenerateJWT(id string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+func comparePasswords(hashedPwd, plainPwd string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPwd), []byte(plainPwd))
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
 }

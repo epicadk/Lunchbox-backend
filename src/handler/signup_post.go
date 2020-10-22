@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/crypto/bcrypt"
 )
 
 //User defines user
@@ -41,7 +42,7 @@ func SignupPost(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
-		//add mongodb URI here
+		//Add mongodb URI here
 		"",
 	))
 	if err != nil {
@@ -61,7 +62,7 @@ func SignupPost(c *gin.Context) {
 
 	// If user does not exists add user to database and return info
 	user.Username = username
-	user.Password = password
+	user.Password = hashpassword(password)
 	result, err := collection.InsertOne(ctx, user)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
@@ -83,4 +84,12 @@ func SignupPost(c *gin.Context) {
 		"message": "User was created successfully.",
 		"id":      token,
 	})
+}
+
+func hashpassword(password string) string {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(hash)
 }
