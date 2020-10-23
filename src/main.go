@@ -17,5 +17,6 @@ func main() {
 	r.Use(middleware.TokenAuthMiddleware)
 
 	r.POST("/validate", handler.AuthTokenPost)
+	r.POST("/comments", handler.CommentsPost)
 	r.Run() //default is 8080
 }
