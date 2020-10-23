@@ -2,14 +2,12 @@ package handler
 
 import (
 	"context"
-	"log"
+	database "go-gin-api/src/database"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 //CommentContainer comment Model
@@ -27,13 +25,7 @@ func CommentsPost(c *gin.Context) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
-		//Add mongodb URI here
-		"",
-	))
-	if err != nil {
-		log.Fatal(err)
-	}
+	client := database.MongoClient(ctx)
 
 	// Checking if user Exists
 	var curruser User
@@ -41,7 +33,7 @@ func CommentsPost(c *gin.Context) {
 	commentContainer.Username = user
 	commentContainer.Comment = comment
 	usercollection := client.Database("Lunchbox").Collection("Users")
-	err = usercollection.FindOne(ctx, User{Username: user}).Decode(&curruser)
+	err := usercollection.FindOne(ctx, User{Username: user}).Decode(&curruser)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusConflict, gin.H{
 			"message": "Username does not exist",

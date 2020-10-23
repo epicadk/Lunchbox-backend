@@ -2,13 +2,12 @@ package handler
 
 import (
 	"context"
+	database "go-gin-api/src/database"
 	"log"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -19,18 +18,12 @@ func LoginPost(c *gin.Context) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
-		//Add mongodb URI here
-		"",
-	))
-	if err != nil {
-		log.Fatal(err)
-	}
+	client := database.MongoClient(ctx)
 
 	// Checking if user Exists
 	var user User
 	collection := client.Database("Lunchbox").Collection("Users")
-	err = collection.FindOne(ctx, User{Username: username}).Decode(&user)
+	err := collection.FindOne(ctx, User{Username: username}).Decode(&user)
 
 	if err != nil || user.Username == "" {
 		c.AbortWithStatusJSON(400, gin.H{

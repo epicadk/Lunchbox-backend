@@ -2,15 +2,13 @@ package handler
 
 import (
 	"context"
+	"github.com/gin-gonic/gin"
+	database "go-gin-api/src/database"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"golang.org/x/crypto/bcrypt"
 )
 
 //User defines user
@@ -41,18 +39,12 @@ func SignupPost(c *gin.Context) {
 	// Connecting to MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
-		//Add mongodb URI here
-		"",
-	))
-	if err != nil {
-		log.Fatal(err)
-	}
+	client := database.MongoClient(ctx)
 
 	// Checking if user Exists
 	var user User
 	collection := client.Database("Lunchbox").Collection("Users")
-	err = collection.FindOne(ctx, User{Username: username}).Decode(&user)
+	err := collection.FindOne(ctx, User{Username: username}).Decode(&user)
 	if err == nil {
 		c.AbortWithStatusJSON(http.StatusConflict, gin.H{
 			"message": "Username exists",
@@ -62,7 +54,7 @@ func SignupPost(c *gin.Context) {
 
 	// If user does not exists add user to database and return info
 	user.Username = username
-	user.Password = hashpassword(password)
+	user.Password = hashPassword(password)
 	result, err := collection.InsertOne(ctx, user)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
@@ -86,7 +78,7 @@ func SignupPost(c *gin.Context) {
 	})
 }
 
-func hashpassword(password string) string {
+func hashPassword(password string) string {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 	if err != nil {
 		log.Fatal(err)
