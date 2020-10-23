@@ -28,12 +28,12 @@ func CommentsPost(c *gin.Context) {
 	client := database.MongoClient(ctx)
 
 	// Checking if user Exists
-	var curruser User
+	var currUser User
 	var commentContainer CommentContainer
 	commentContainer.Username = user
 	commentContainer.Comment = comment
-	usercollection := client.Database("Lunchbox").Collection("Users")
-	err := usercollection.FindOne(ctx, User{Username: user}).Decode(&curruser)
+	userCollection := client.Database("Lunchbox").Collection("Users")
+	err := userCollection.FindOne(ctx, User{Username: user}).Decode(&currUser)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusConflict, gin.H{
 			"message": "Username does not exist",
@@ -41,6 +41,7 @@ func CommentsPost(c *gin.Context) {
 		})
 		return
 	}
+	//Adding comment to db
 	commentCollection := client.Database("LunchboxComments").Collection(resID)
 	_, err = commentCollection.InsertOne(ctx, commentContainer)
 	c.JSON(200, gin.H{
