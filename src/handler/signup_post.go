@@ -2,13 +2,15 @@ package handler
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
 	database "go-gin-api/src/database"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"golang.org/x/crypto/bcrypt"
+	"go-gin-api/src/utils"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 )
 
 //User defines user
@@ -64,7 +66,7 @@ func SignupPost(c *gin.Context) {
 	}
 
 	//Generate Auth Token For current User
-	token, err := GenerateJWT(result.InsertedID.(primitive.ObjectID).Hex())
+	token, err := utils.GenerateJWT(result.InsertedID.(primitive.ObjectID).Hex())
 	if err != nil {
 		c.AbortWithStatusJSON(400, gin.H{
 			"message": err.Error(),

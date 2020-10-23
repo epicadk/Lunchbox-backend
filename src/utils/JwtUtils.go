@@ -2,8 +2,10 @@ package utils
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
+	"log"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 //GenerateJWT generates JWT token
@@ -40,5 +42,15 @@ func VerifyAuthToken(header string) (bool, error) {
 	if token.Valid {
 		return true, nil
 	}
+	log.Println(token)
 	return false, nil
+}
+
+func GetUserID(header string) string {
+	claims := jwt.MapClaims{}
+	_, _, err := new(jwt.Parser).ParseUnverified(header, claims)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return fmt.Sprint(claims["client"])
 }
