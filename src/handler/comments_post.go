@@ -12,28 +12,33 @@ import (
 
 //CommentContainer comment Model
 type CommentContainer struct {
-	ID       primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Username string             `json:"username,omitempty" bson:"username,omitempty"`
-	Comment  string             `json:"comment,omitempty" bson:"comment,omitempty"`
+	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Username    string             `json:"username,omitempty" bson:"username,omitempty"`
+	Comment     string             `json:"comment,omitempty" bson:"comment,omitempty"`
+	ZomatoResID string             `json:"zomato_res_id,omitempty" bson:"zomato_res_id,omitempty"`
 }
 
 //CommentsPost handles Post Request on comment Endpoint
 func CommentsPost(c *gin.Context) {
-	user := c.PostForm("UserName")
+
+	username := c.PostForm("UserName")
 	comment := c.PostForm("Comment")
-	resID := c.PostForm("ResID")
+	ZomatoResID := c.PostForm("ZomatoResID")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client := database.MongoClient(ctx)
 
-	// Checking if user Exists
-	var currUser User
+	var user User
 	var commentContainer CommentContainer
-	commentContainer.Username = user
+
+	commentContainer.Username = username
 	commentContainer.Comment = comment
+	commentContainer.ZomatoResID = ZomatoResID
+
+	// Checking if user Exists
 	userCollection := client.Database("Lunchbox").Collection("Users")
-	err := userCollection.FindOne(ctx, User{Username: user}).Decode(&currUser)
+	err := userCollection.FindOne(ctx, User{Username: username}).Decode(&user)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusConflict, gin.H{
 			"message": "Username does not exist",
@@ -41,8 +46,9 @@ func CommentsPost(c *gin.Context) {
 		})
 		return
 	}
+
 	//Adding comment to db
-	commentCollection := client.Database("LunchboxComments").Collection(resID)
+	commentCollection := client.Database("Lunchbox").Collection("Comments")
 	_, err = commentCollection.InsertOne(ctx, commentContainer)
 	c.JSON(200, gin.H{
 		"message": "done",

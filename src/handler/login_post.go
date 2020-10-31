@@ -39,6 +39,7 @@ func LoginPost(c *gin.Context) {
 		})
 		return
 	}
+
 	token, err := utils.GenerateJWT(user.ID.Hex())
 
 	if err != nil {
