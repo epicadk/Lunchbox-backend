@@ -29,7 +29,6 @@ func SignupPost(c *gin.Context) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 	repassword := c.PostForm("repassword")
-
 	//Valid password and repassword
 	if password != repassword {
 		c.JSON(400, gin.H{
@@ -37,6 +36,7 @@ func SignupPost(c *gin.Context) {
 		})
 		return
 	}
+	//TODO add password validation
 
 	// Connecting to MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -46,14 +46,13 @@ func SignupPost(c *gin.Context) {
 	// Checking if user Exists
 	var user User
 	collection := client.Database("Lunchbox").Collection("Users")
-	err := collection.FindOne(ctx, User{Username: username}).Decode(&user)
-	if err == nil {
+
+	if result := collection.FindOne(ctx, User{Username: username}); result.Err() == nil {
 		c.AbortWithStatusJSON(http.StatusConflict, gin.H{
 			"message": "Username exists",
 		})
 		return
 	}
-
 	// If user does not exists add user to database and return info
 	user.Username = username
 	user.Password = hashPassword(password)
@@ -64,12 +63,11 @@ func SignupPost(c *gin.Context) {
 		})
 		return
 	}
-
 	//Generate Auth Token For current User
 	token, err := utils.GenerateJWT(result.InsertedID.(primitive.ObjectID).Hex())
 	if err != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"message": err.Error(),
+		c.AbortWithStatusJSON(500, gin.H{
+			"message": http.StatusText(500),
 		})
 		return
 	}

@@ -5,6 +5,7 @@ import (
 	database "go-gin-api/src/database"
 	"go-gin-api/src/utils"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -21,16 +22,20 @@ func LoginPost(c *gin.Context) {
 	client := database.MongoClient(ctx)
 
 	// Checking if user Exists
-	var user User
 	collection := client.Database("Lunchbox").Collection("Users")
-	err := collection.FindOne(ctx, User{Username: username}).Decode(&user)
+	result := collection.FindOne(ctx, User{Username: username})
 
-	if err != nil || user.Username == "" {
+	if result.Err() != nil {
 		c.AbortWithStatusJSON(400, gin.H{
 			"message": "Username does not exist",
-			"error":   err.Error(),
+			"error":   result.Err(),
 		})
 		return
+	}
+	//Decoding user
+	var user User
+	if err := result.Decode(&user); err != nil {
+		log.Fatal(err)
 	}
 
 	if !comparePasswords(user.Password, password) {
@@ -39,16 +44,15 @@ func LoginPost(c *gin.Context) {
 		})
 		return
 	}
-
+	//Generating Auth Token
 	token, err := utils.GenerateJWT(user.ID.Hex())
-
 	if err != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"message": "Internal Server Error",
+		c.AbortWithStatusJSON(500, gin.H{
+			"message": http.StatusText(500),
 		})
 		log.Fatal(err.Error())
 	}
-
+	//Final Response if all is okay
 	c.JSON(200, gin.H{
 		"token": token,
 	})
