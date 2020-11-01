@@ -6,12 +6,12 @@ type User struct {
 	ID       primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Username string             `json:"username,omitempty" bson:"username,omitempty"`
 	Password string             `json:"password,omitempty" bson:"password,omitempty"`
-	Phone    int64              `json:"phone,omitempty" bson:"password,omitempty"`
+	Phone    int64              `json:"phone,omitempty" bson:"phone,omitempty"`
 }
 
 type UserFavouriteRestaurants struct {
 	Id        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	FavResIds []int              `json:"fav_res_ids,omitempty" bson:"fav_res_ids,omitempty"`
+	FavResIds []string           `json:"fav_res_ids,omitempty" bson:"fav_res_ids,omitempty"`
 	UserId    primitive.ObjectID `json:"user_id" bson:"user_id"`
 }
 

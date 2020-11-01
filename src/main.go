@@ -20,5 +20,6 @@ func main() {
 	r.POST("/comments", handler.CommentsPost)
 	r.GET("/comments", handler.CommentsGet)
 	r.POST("/fav", handler.FavRestaurantPost)
+	r.GET("/fav", handler.FavouriteRestaurantGet)
 	r.Run() //default is 8080
 }
