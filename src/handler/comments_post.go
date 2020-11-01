@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	database "go-gin-api/src/database"
+	"go-gin-api/src/utils"
 	"log"
 	"net/http"
 	"time"
@@ -21,10 +22,18 @@ type CommentContainerPostRequest struct {
 
 //CommentsPost handles Post Request on comment Endpoint
 func CommentsPost(c *gin.Context) {
-	//TODO use should bindJSON
-	userID := c.PostForm("UserID")
-	comment := c.PostForm("Comment")
-	ZomatoResID := c.PostForm("ZomatoResID")
+	var request CommentContainerPostRequest
+	token := c.GetHeader("Auth_token")
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
+			"message": http.StatusText(http.StatusUnprocessableEntity),
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	userID := utils.GetUserID(token)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -39,12 +48,13 @@ func CommentsPost(c *gin.Context) {
 	}
 
 	commentContainer.UserID = objectID
-	commentContainer.Comment = comment
-	commentContainer.ZomatoResID = ZomatoResID
+	commentContainer.Comment = request.Comment
+	commentContainer.ZomatoResID = request.ZomatoResID
+	commentContainer.Title = request.Title
 
 	// Checking if user Exists
 	userCollection := client.Database("Lunchbox").Collection("Users")
-	result := userCollection.FindOne(ctx, User{ID: commentContainer.UserID})
+	result := userCollection.FindOne(ctx, database.User{ID: commentContainer.UserID})
 
 	if result.Err() != nil {
 		c.AbortWithStatusJSON(400, gin.H{
@@ -54,11 +64,13 @@ func CommentsPost(c *gin.Context) {
 	}
 
 	//Decoding user
-	var user User
+	var user database.User
 	if err := result.Decode(&user); err != nil {
 		log.Fatal(err)
 	}
+
 	commentContainer.UserName = user.Username
+
 	//Adding comment to db
 	commentCollection := client.Database("Lunchbox").Collection("Comments")
 	_, err = commentCollection.InsertOne(ctx, commentContainer)

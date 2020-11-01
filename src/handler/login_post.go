@@ -21,13 +21,19 @@ type LoginRequest struct {
 // Login response model
 type LoginResponse struct {
 	AuthToken    string `json:"auth_token"`
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
-//LoginPost Handles post Request to Login Endpoin
+//LoginPost Handles post Request to Login Endpoint
 func LoginPost(c *gin.Context) {
-	username := c.PostForm("username")
-	password := c.PostForm("password")
+	var request LoginRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
+			"message": http.StatusText(http.StatusUnprocessableEntity),
+			"error":   err.Error(),
+		})
+		return
+	}
 	//TODO add should Bind JSON
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -35,7 +41,7 @@ func LoginPost(c *gin.Context) {
 
 	// Checking if user Exists
 	collection := client.Database("Lunchbox").Collection("Users")
-	result := collection.FindOne(ctx, User{Username: username})
+	result := collection.FindOne(ctx, database.User{Username: request.Username})
 
 	if result.Err() != nil {
 		c.AbortWithStatusJSON(400, gin.H{
@@ -46,12 +52,12 @@ func LoginPost(c *gin.Context) {
 		return
 	}
 	//Decoding user
-	var user User
+	var user database.User
 	if err := result.Decode(&user); err != nil {
 		log.Fatal(err)
 	}
 
-	if !comparePasswords(user.Password, password) {
+	if !comparePasswords(user.Password, request.Password) {
 		c.AbortWithStatusJSON(400, gin.H{
 			"message": "Password incorrect",
 		})
@@ -65,10 +71,11 @@ func LoginPost(c *gin.Context) {
 		})
 		log.Fatal(err.Error())
 	}
+
 	//Final Response if all is okay
-	c.JSON(200, gin.H{
-		"token": token,
-	})
+	response := LoginResponse{AuthToken: token,
+		RefreshToken: ""}
+	c.JSON(200, response)
 }
 
 func comparePasswords(hashedPwd, plainPwd string) bool {

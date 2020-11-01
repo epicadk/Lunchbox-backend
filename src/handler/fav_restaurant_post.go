@@ -43,7 +43,7 @@ func FavRestaurantPost(c *gin.Context) {
 	// Checking if user Exists
 
 	userCollection := client.Database("Lunchbox").Collection("Users")
-	result := userCollection.FindOne(ctx, User{ID: userFavs.UserId})
+	result := userCollection.FindOne(ctx, database.User{ID: userFavs.UserId})
 	if result.Err() != nil {
 		c.AbortWithStatusJSON(400, gin.H{
 			"message": "Username does not exist",
@@ -54,7 +54,7 @@ func FavRestaurantPost(c *gin.Context) {
 
 	//Decoding user
 
-	var user User
+	var user database.User
 	if err := result.Decode(&user); err != nil {
 		log.Fatal(err)
 	}
