@@ -1,4 +1,4 @@
-module go-gin-api
+module github.com/epicadk/Lunchbox-backend
 
 go 1.15
 

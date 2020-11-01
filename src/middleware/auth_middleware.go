@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"go-gin-api/src/utils"
+	"github.com/epicadk/Lunchbox-backend/src/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

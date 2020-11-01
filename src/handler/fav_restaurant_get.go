@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"go-gin-api/src/database"
+	"github.com/epicadk/Lunchbox-backend/src/database"
 	"log"
 	"net/http"
 	"time"

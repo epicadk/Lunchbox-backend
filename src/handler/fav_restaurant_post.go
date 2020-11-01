@@ -2,9 +2,9 @@ package handler
 
 import (
 	"context"
+	"github.com/epicadk/Lunchbox-backend/src/database"
+	"github.com/epicadk/Lunchbox-backend/src/utils"
 	"github.com/gin-gonic/gin"
-	database "go-gin-api/src/database"
-	"go-gin-api/src/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"

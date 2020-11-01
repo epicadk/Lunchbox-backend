@@ -2,8 +2,8 @@ package handler
 
 import (
 	"context"
-	database "go-gin-api/src/database"
-	"go-gin-api/src/utils"
+	"github.com/epicadk/Lunchbox-backend/src/database"
+	"github.com/epicadk/Lunchbox-backend/src/utils"
 	"net/http"
 	"time"
 

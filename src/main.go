@@ -1,8 +1,8 @@
 package main
 
 import (
-	handler "go-gin-api/src/Handler"
-	middleware "go-gin-api/src/Middleware"
+	handler "github.com/epicadk/Lunchbox-backend/src/Handler"
+	middleware "github.com/epicadk/Lunchbox-backend/src/Middleware"
 
 	"github.com/gin-gonic/gin"
 )
