@@ -18,6 +18,7 @@ func main() {
 
 	r.POST("/validate", handler.AuthTokenPost)
 	r.POST("/comments", handler.CommentsPost)
+	r.GET("/comments", handler.CommentsGet)
 	r.POST("/fav", handler.FavRestaurantPost)
 	r.Run() //default is 8080
 }

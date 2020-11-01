@@ -11,17 +11,17 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-//CommentContainer comment Model
-type CommentContainer struct {
-	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	UserID      primitive.ObjectID `json:"user_id" bson:"user_id"`
-	Comment     string             `json:"comment" bson:"comment"`
-	ZomatoResID string             `json:"zomato_res_id" bson:"zomato_res_id"`
+type CommentContainerPostRequest struct {
+	Comment     string `json:"comment"`
+	Title       string `json:"title"`
+	ZomatoResID string `json:"zomato_res_id"`
 }
+
+//CommentContainer comment Model
 
 //CommentsPost handles Post Request on comment Endpoint
 func CommentsPost(c *gin.Context) {
-
+	//TODO use should bindJSON
 	userID := c.PostForm("UserID")
 	comment := c.PostForm("Comment")
 	ZomatoResID := c.PostForm("ZomatoResID")
@@ -30,7 +30,7 @@ func CommentsPost(c *gin.Context) {
 	defer cancel()
 	client := database.MongoClient(ctx)
 
-	var commentContainer CommentContainer
+	var commentContainer database.CommentsContainer
 	objectID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -58,7 +58,7 @@ func CommentsPost(c *gin.Context) {
 	if err := result.Decode(&user); err != nil {
 		log.Fatal(err)
 	}
-
+	commentContainer.UserName = user.Username
 	//Adding comment to db
 	commentCollection := client.Database("Lunchbox").Collection("Comments")
 	_, err = commentCollection.InsertOne(ctx, commentContainer)

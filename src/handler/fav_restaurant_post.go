@@ -12,11 +12,15 @@ import (
 	"time"
 )
 
+type UserFavouritePostRequest struct {
+	Favourite int `json:"favourite"`
+}
+
+//TODO Delete this
 type UserFavs struct {
 	Id        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	FavResIds []int              `json:"fav_res_ids,omitempty" bson:"fav_res_ids,omitempty"`
-	//Check this
-	UserId primitive.ObjectID `json:"user_id" bson:"user_id"`
+	UserId    primitive.ObjectID `json:"user_id" bson:"user_id"`
 }
 
 //FavRestaurantPost handles post req to post endpoint.

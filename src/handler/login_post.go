@@ -12,11 +12,23 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//LoginPost Handles post Request to Login Endpoint
+//Login request model
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// Login response model
+type LoginResponse struct {
+	AuthToken    string `json:"auth_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+//LoginPost Handles post Request to Login Endpoin
 func LoginPost(c *gin.Context) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
-
+	//TODO add should Bind JSON
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client := database.MongoClient(ctx)
@@ -29,6 +41,7 @@ func LoginPost(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{
 			"message": "Username does not exist",
 			"error":   result.Err(),
+			"result":  result,
 		})
 		return
 	}
