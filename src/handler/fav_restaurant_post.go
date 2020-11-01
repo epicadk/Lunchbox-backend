@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	database "go-gin-api/src/database"
+	"go-gin-api/src/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -13,29 +14,35 @@ import (
 )
 
 type UserFavouritePostRequest struct {
-	Favourite int `json:"favourite"`
+	Favourite int64 `json:"zomato_res_id"`
 }
 
 //TODO Delete this
 type UserFavs struct {
 	Id        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	FavResIds []int              `json:"fav_res_ids,omitempty" bson:"fav_res_ids,omitempty"`
-	UserId    primitive.ObjectID `json:"user_id" bson:"user_id"`
+	FavResIds []int64            `json:"fav_res_ids,omitempty" bson:"fav_res_ids,omitempty"`
+	UserId    primitive.ObjectID `json:"user_id,omitempty" bson:"user_id,omitempty"`
 }
 
 //FavRestaurantPost handles post req to post endpoint.
 func FavRestaurantPost(c *gin.Context) {
 
-	var userFavs UserFavs
-	err := c.ShouldBindJSON(&userFavs)
-
-	if err != nil {
+	var request UserFavouritePostRequest
+	token := c.GetHeader("Auth_token")
+	if err := c.ShouldBindJSON(&request); err != nil {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": http.StatusText(http.StatusUnprocessableEntity),
 		})
 		return
 	}
-
+	userID := utils.GetUserID(token)
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"message": http.StatusText(http.StatusUnauthorized),
+		})
+		return
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client := database.MongoClient(ctx)
@@ -43,7 +50,7 @@ func FavRestaurantPost(c *gin.Context) {
 	// Checking if user Exists
 
 	userCollection := client.Database("Lunchbox").Collection("Users")
-	result := userCollection.FindOne(ctx, database.User{ID: userFavs.UserId})
+	result := userCollection.FindOne(ctx, database.User{ID: objectID})
 	if result.Err() != nil {
 		c.AbortWithStatusJSON(400, gin.H{
 			"message": "Username does not exist",
@@ -63,7 +70,7 @@ func FavRestaurantPost(c *gin.Context) {
 
 	favsCollection := client.Database("Lunchbox").Collection("UserData")
 	update := bson.M{
-		"$addToSet": bson.M{"fav_res_ids": "1"},
+		"$addToSet": bson.M{"fav_res_ids": request.Favourite},
 	}
 	upsert := true
 	after := options.After
@@ -71,12 +78,12 @@ func FavRestaurantPost(c *gin.Context) {
 		Upsert:         &upsert,
 		ReturnDocument: &after,
 	}
-	res := favsCollection.FindOneAndUpdate(ctx, UserFavs{UserId: userFavs.UserId}, update, &opt)
+	res := favsCollection.FindOneAndUpdate(ctx, UserFavs{UserId: objectID}, update, &opt)
 
 	if res.Err() != nil {
 		c.AbortWithStatusJSON(400, gin.H{
 			"message": "Username does not exist result error",
-			"error":   res.Err(),
+			"error":   res.Err().Error(),
 		})
 		return
 	}

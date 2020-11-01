@@ -2,11 +2,12 @@ package handler
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
 	"go-gin-api/src/database"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 func FavouriteRestaurantGet(c *gin.Context) {
@@ -43,7 +44,7 @@ func FavouriteRestaurantGet(c *gin.Context) {
 
 	if result.Err() != nil {
 		c.AbortWithStatusJSON(500, gin.H{
-			"message": result.Err(),
+			"message": result.Err().Error(),
 		})
 		return
 	}

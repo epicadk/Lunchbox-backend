@@ -4,7 +4,6 @@ import (
 	"context"
 	database "go-gin-api/src/database"
 	"go-gin-api/src/utils"
-	"log"
 	"net/http"
 	"time"
 
@@ -26,14 +25,20 @@ type SignupResponse struct {
 //SignupPost handles post request to Signup End Point
 func SignupPost(c *gin.Context) {
 	var user database.User
-	if err := c.ShouldBindJSON(&user); err != nil {
+	err := c.ShouldBindJSON(&user)
+	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": http.StatusText(http.StatusUnprocessableEntity),
 		})
 		return
 	}
 	//TODO add password validation
-	user.Password = hashPassword(user.Password)
+	user.Password, err = hashPassword(user.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": http.StatusText(http.StatusInternalServerError),
+		})
+	}
 	// Connecting to MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -71,10 +76,10 @@ func SignupPost(c *gin.Context) {
 	})
 }
 
-func hashPassword(password string) string {
+func hashPassword(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
-	return string(hash)
+	return string(hash), nil
 }

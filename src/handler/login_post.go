@@ -44,9 +44,15 @@ func LoginPost(c *gin.Context) {
 	result := collection.FindOne(ctx, database.User{Username: request.Username})
 
 	if result.Err() != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"message": "Username does not exist",
-		})
+		if result.Err().Error() == "mongo: no documents in result" {
+			c.AbortWithStatusJSON(400, gin.H{
+				"message": "Username does not exist",
+			})
+		} else {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": http.StatusText(http.StatusInternalServerError),
+			})
+		}
 		return
 	}
 	//Decoding user
@@ -79,7 +85,6 @@ func LoginPost(c *gin.Context) {
 func comparePasswords(hashedPwd, plainPwd string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPwd), []byte(plainPwd))
 	if err != nil {
-		log.Println(err)
 		return false
 	}
 	return true
