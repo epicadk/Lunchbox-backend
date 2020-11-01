@@ -7,17 +7,13 @@ import (
 	"go-gin-api/src/database"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
-type CommentsGetRequests struct {
-	ZomatoResID string `json:"zomato_res_id"`
-}
-
 func CommentsGet(c *gin.Context) {
-	var request CommentsGetRequests
-
-	if err := c.ShouldBindJSON(&request); err != nil {
+	resId := c.Query("resID")
+	if _, err := strconv.Atoi(resId); resId == "" || err != nil {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": http.StatusText(http.StatusUnprocessableEntity),
 		})
@@ -29,7 +25,7 @@ func CommentsGet(c *gin.Context) {
 	client := database.MongoClient(ctx)
 
 	commentsCollection := client.Database("Lunchbox").Collection("Comments")
-	cursor, err := commentsCollection.Find(ctx, database.CommentsContainer{ZomatoResID: request.ZomatoResID})
+	cursor, err := commentsCollection.Find(ctx, database.CommentsContainer{ZomatoResID: resId})
 
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{

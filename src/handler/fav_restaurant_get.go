@@ -4,20 +4,15 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"go-gin-api/src/database"
-	"go.mongodb.org/mongo-driver/bson"
 	"log"
 	"net/http"
 	"time"
 )
 
-type FavouriteRestaurantGetRequest struct {
-	Username string `json:"username"`
-}
-
 func FavouriteRestaurantGet(c *gin.Context) {
 	//TODO change to url param
-	var request FavouriteRestaurantGetRequest
-	if err := c.ShouldBindJSON(&request); err != nil {
+	username := c.Query("username")
+	if username == "" {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": http.StatusText(http.StatusUnprocessableEntity),
 		})
@@ -27,7 +22,7 @@ func FavouriteRestaurantGet(c *gin.Context) {
 	defer cancel()
 	client := database.MongoClient(ctx)
 	userCollection := client.Database("Lunchbox").Collection("Users")
-	result := userCollection.FindOne(ctx, bson.M{"username": "okn"})
+	result := userCollection.FindOne(ctx, database.User{Username: username})
 
 	if result.Err() != nil {
 		c.AbortWithStatusJSON(400, gin.H{
