@@ -1,8 +1,8 @@
 package main
 
 import (
-	handler "github.com/epicadk/Lunchbox-backend/src/Handler"
-	middleware "github.com/epicadk/Lunchbox-backend/src/Middleware"
+	"github.com/epicadk/Lunchbox-backend/src/handler"
+	"github.com/epicadk/Lunchbox-backend/src/middleware"
 
 	"github.com/gin-gonic/gin"
 )
