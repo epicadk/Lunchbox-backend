@@ -45,6 +45,7 @@ func CommentsPost(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"message": http.StatusText(http.StatusUnauthorized),
 		})
+		return
 	}
 
 	commentContainer.UserID = objectID

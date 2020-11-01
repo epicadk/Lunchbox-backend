@@ -44,7 +44,7 @@ func SignupPost(c *gin.Context) {
 
 	if result := collection.FindOne(ctx, database.User{Username: user.Username}); result.Err() == nil {
 		c.AbortWithStatusJSON(http.StatusConflict, gin.H{
-			"message": "Username exists",
+			"message": "Username already exists",
 		})
 		return
 	}

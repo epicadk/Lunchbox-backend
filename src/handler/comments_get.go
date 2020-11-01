@@ -29,11 +29,10 @@ func CommentsGet(c *gin.Context) {
 	client := database.MongoClient(ctx)
 
 	commentsCollection := client.Database("Lunchbox").Collection("Comments")
-
 	cursor, err := commentsCollection.Find(ctx, database.CommentsContainer{ZomatoResID: request.ZomatoResID})
 
 	if err != nil {
-		c.AbortWithStatusJSON(500, gin.H{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
 		return
@@ -51,6 +50,5 @@ func CommentsGet(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"comments": comments,
-		"size":     cursor.Current.String(),
 	})
 }

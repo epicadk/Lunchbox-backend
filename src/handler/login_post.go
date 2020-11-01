@@ -34,7 +34,7 @@ func LoginPost(c *gin.Context) {
 		})
 		return
 	}
-	//TODO add should Bind JSON
+	//TODO add password validation here
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client := database.MongoClient(ctx)
@@ -46,8 +46,6 @@ func LoginPost(c *gin.Context) {
 	if result.Err() != nil {
 		c.AbortWithStatusJSON(400, gin.H{
 			"message": "Username does not exist",
-			"error":   result.Err(),
-			"result":  result,
 		})
 		return
 	}
