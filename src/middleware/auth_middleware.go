@@ -38,6 +38,6 @@ func TokenAuthMiddleware(c *gin.Context) {
 
 func respondWithError(c *gin.Context, code int, message interface{}) {
 	c.AbortWithStatusJSON(code, gin.H{
-		"error": message,
+		"message": message,
 	})
 }

@@ -12,22 +12,24 @@ import (
 )
 
 type RefreshResponse struct {
-	Token string `json:"token"`
+	AuthToken string `json:"auth_token"`
 }
 
 func RefreshPost(c *gin.Context) {
 	RefreshToken := c.Request.Header.Get("Refresh_token")
+	log.Println(c.Request.Header)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client := database.MongoClient(ctx)
-
 	id := utils.GetUserID(RefreshToken)
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"message": "Invalid Refresh Token",
 		})
+		return
 	}
+
 	collection := client.Database("Lunchbox").Collection("Users")
 	result := collection.FindOne(ctx, database.User{ID: objectId})
 
@@ -49,6 +51,7 @@ func RefreshPost(c *gin.Context) {
 	if err := result.Decode(&user); err != nil {
 		log.Fatal(err)
 	}
+
 	verified, err := utils.VerifyRefreshToken(RefreshToken, user.Password)
 	if err != nil {
 		if err.Error() == "Refresh Token is expired" {
@@ -69,11 +72,11 @@ func RefreshPost(c *gin.Context) {
 		respondWithError(c, 500, http.StatusText(500))
 		return
 	}
-	c.JSON(200, RefreshResponse{Token: newToken})
+	c.JSON(200, RefreshResponse{AuthToken: newToken})
 }
 
 func respondWithError(c *gin.Context, code int, message interface{}) {
 	c.AbortWithStatusJSON(code, gin.H{
-		"error": message,
+		"message": message,
 	})
 }
