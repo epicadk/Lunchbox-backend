@@ -2,23 +2,24 @@ package handler
 
 import (
 	"context"
-	"github.com/epicadk/Lunchbox-backend/src/database"
-	"github.com/epicadk/Lunchbox-backend/src/utils"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/epicadk/Lunchbox-backend/src/database"
+	"github.com/epicadk/Lunchbox-backend/src/utils"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
-//Login request model
+//LoginRequest model
 type LoginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-// Login response model
+//LoginResponse model
 type LoginResponse struct {
 	AuthToken    string `json:"auth_token"`
 	RefreshToken string `json:"refresh_token,omitempty"`
@@ -27,10 +28,9 @@ type LoginResponse struct {
 //LoginPost Handles post Request to Login Endpoint
 func LoginPost(c *gin.Context) {
 	var request LoginRequest
-	if err := c.ShouldBindJSON(&request); err != nil {
+	if err := c.ShouldBindJSON(&request); err != nil || request.Username == "" || request.Password == "" {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": http.StatusText(http.StatusUnprocessableEntity),
-			"error":   err.Error(),
 		})
 		return
 	}

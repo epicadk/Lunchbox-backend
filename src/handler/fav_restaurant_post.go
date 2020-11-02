@@ -2,15 +2,16 @@ package handler
 
 import (
 	"context"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/epicadk/Lunchbox-backend/src/database"
 	"github.com/epicadk/Lunchbox-backend/src/utils"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
-	"net/http"
-	"time"
 )
 
 type UserFavouritePostRequest struct {
@@ -29,7 +30,7 @@ func FavRestaurantPost(c *gin.Context) {
 
 	var request UserFavouritePostRequest
 	token := c.GetHeader("Auth_token")
-	if err := c.ShouldBindJSON(&request); err != nil {
+	if err := c.ShouldBindJSON(&request); err != nil || request.Favourite == 0 {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": http.StatusText(http.StatusUnprocessableEntity),
 		})

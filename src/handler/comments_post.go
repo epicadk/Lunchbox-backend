@@ -2,11 +2,12 @@ package handler
 
 import (
 	"context"
-	"github.com/epicadk/Lunchbox-backend/src/database"
-	"github.com/epicadk/Lunchbox-backend/src/utils"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/epicadk/Lunchbox-backend/src/database"
+	"github.com/epicadk/Lunchbox-backend/src/utils"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -25,10 +26,9 @@ func CommentsPost(c *gin.Context) {
 	var request CommentContainerPostRequest
 	token := c.GetHeader("Auth_token")
 
-	if err := c.ShouldBindJSON(&request); err != nil {
+	if err := c.ShouldBindJSON(&request); err != nil || request.Comment == "" || request.Title == "" || request.ZomatoResID == "" {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": http.StatusText(http.StatusUnprocessableEntity),
-			"error":   err.Error(),
 		})
 		return
 	}

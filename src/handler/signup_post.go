@@ -2,10 +2,11 @@ package handler
 
 import (
 	"context"
-	"github.com/epicadk/Lunchbox-backend/src/database"
-	"github.com/epicadk/Lunchbox-backend/src/utils"
 	"net/http"
 	"time"
+
+	"github.com/epicadk/Lunchbox-backend/src/database"
+	"github.com/epicadk/Lunchbox-backend/src/utils"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -26,7 +27,7 @@ type SignupResponse struct {
 func SignupPost(c *gin.Context) {
 	var user database.User
 	err := c.ShouldBindJSON(&user)
-	if err != nil {
+	if err != nil || user.Username == "" || user.Phone == 0 || user.Password == "" {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": http.StatusText(http.StatusUnprocessableEntity),
 		})
@@ -37,6 +38,7 @@ func SignupPost(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": http.StatusText(http.StatusInternalServerError),
+			"error":   err.Error(),
 		})
 	}
 	// Connecting to MongoDB
@@ -58,6 +60,7 @@ func SignupPost(c *gin.Context) {
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": http.StatusText(http.StatusInternalServerError),
+			"mes":     err.Error(),
 		})
 		return
 	}

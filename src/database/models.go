@@ -4,9 +4,9 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type User struct {
 	ID       primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Username string             `json:"username,omitempty" bson:"username,omitempty"`
-	Password string             `json:"password,omitempty" bson:"password,omitempty"`
-	Phone    int64              `json:"phone,omitempty" bson:"phone,omitempty"`
+	Username string             `json:"username" bson:"username,omitempty"`
+	Password string             `json:"password" bson:"password,omitempty"`
+	Phone    int64              `json:"phone" bson:"phone,omitempty"`
 }
 
 type UserFavouriteRestaurants struct {
