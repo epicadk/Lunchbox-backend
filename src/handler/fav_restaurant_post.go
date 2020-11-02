@@ -29,7 +29,7 @@ type UserFavs struct {
 func FavRestaurantPost(c *gin.Context) {
 
 	var request UserFavouritePostRequest
-	token := c.GetHeader("Auth_token")
+	token := c.GetHeader("Authorization")
 	if err := c.ShouldBindJSON(&request); err != nil || request.Favourite == 0 {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": http.StatusText(http.StatusUnprocessableEntity),

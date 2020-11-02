@@ -16,7 +16,7 @@ type RefreshResponse struct {
 }
 
 func RefreshPost(c *gin.Context) {
-	RefreshToken := c.Request.Header.Get("Refresh_token")
+	RefreshToken := c.Request.Header.Get("Authorization")
 	log.Println(c.Request.Header)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

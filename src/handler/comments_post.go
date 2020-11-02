@@ -24,7 +24,7 @@ type CommentContainerPostRequest struct {
 //CommentsPost handles Post Request on comment Endpoint
 func CommentsPost(c *gin.Context) {
 	var request CommentContainerPostRequest
-	token := c.GetHeader("Auth_token")
+	token := c.GetHeader("Authorization")
 
 	if err := c.ShouldBindJSON(&request); err != nil || request.Comment == "" || request.Title == "" || request.ZomatoResID == "" {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{

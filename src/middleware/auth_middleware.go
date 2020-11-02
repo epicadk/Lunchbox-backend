@@ -11,7 +11,7 @@ import (
 func TokenAuthMiddleware(c *gin.Context) {
 
 	//TODO check if Auth header does not exist.
-	token := c.Request.Header.Get("Auth_token")
+	token := c.Request.Header.Get("Authorization")
 	if token == "" {
 		respondWithError(c, http.StatusUnauthorized, "Not Authorized")
 		return
