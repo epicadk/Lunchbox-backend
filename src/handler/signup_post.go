@@ -65,8 +65,9 @@ func SignupPost(c *gin.Context) {
 		})
 		return
 	}
+	user.ID = result.InsertedID.(primitive.ObjectID)
 	//Generate Auth Token For current User
-	token, err := utils.GenerateJWT(result.InsertedID.(primitive.ObjectID).Hex())
+	token, err := utils.GenerateJWT(user.ID.Hex())
 	if err != nil {
 		c.AbortWithStatusJSON(500, gin.H{
 			"message": http.StatusText(500),
