@@ -12,6 +12,7 @@ func main() {
 	r := gin.Default()
 	r.POST("/login", handler.LoginPost)
 	r.POST("/signup", handler.SignupPost)
+	r.POST("/refresh", handler.RefreshPost)
 
 	//setting up middleware
 	r.Use(middleware.TokenAuthMiddleware)

@@ -75,10 +75,17 @@ func LoginPost(c *gin.Context) {
 		})
 		log.Fatal(err.Error())
 	}
+	RefreshToken, err := utils.GenerateRefreshJWT(user.ID.Hex(), user.Password)
+	if err != nil {
+		c.AbortWithStatusJSON(500, gin.H{
+			"message": http.StatusText(500),
+		})
+		log.Fatal(err.Error())
+	}
 
 	//Final Response if all is okay
 	response := LoginResponse{AuthToken: token,
-		RefreshToken: ""}
+		RefreshToken: RefreshToken}
 	c.JSON(200, response)
 }
 

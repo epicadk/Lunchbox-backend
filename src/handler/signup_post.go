@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -72,11 +73,14 @@ func SignupPost(c *gin.Context) {
 		})
 		return
 	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "User was created successfully.",
-		"id":      token,
-	})
+	RefreshToken, err := utils.GenerateRefreshJWT(user.ID.Hex(), user.Password)
+	if err != nil {
+		c.AbortWithStatusJSON(500, gin.H{
+			"message": http.StatusText(500),
+		})
+		log.Fatal(err.Error())
+	}
+	c.JSON(http.StatusCreated, SignupResponse{Message: "User Created", AuthToken: token, RefreshToken: RefreshToken})
 }
 
 func hashPassword(password string) (string, error) {
