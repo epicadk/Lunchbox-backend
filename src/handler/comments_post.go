@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/epicadk/Lunchbox-backend/src/utils"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CommentContainerPostRequest struct {
@@ -33,14 +31,16 @@ func CommentsPost(c *gin.Context) {
 		return
 	}
 
-	userID := utils.GetUserID(token)
-
+	userID, err := utils.GetUserID(token)
+	if err != nil {
+		respondWithError(c, 400, "Invalid AuthToken")
+		return
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client := database.MongoClient(ctx)
 
 	var commentContainer database.CommentsContainer
-	objectID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"message": http.StatusText(http.StatusUnauthorized),
@@ -48,26 +48,14 @@ func CommentsPost(c *gin.Context) {
 		return
 	}
 
-	commentContainer.UserID = objectID
+	commentContainer.UserID = userID
 	commentContainer.Comment = request.Comment
 	commentContainer.ZomatoResID = request.ZomatoResID
 	commentContainer.Title = request.Title
 
-	// Checking if user Exists
-	userCollection := client.Database("Lunchbox").Collection("Users")
-	result := userCollection.FindOne(ctx, database.User{ID: commentContainer.UserID})
-
-	if result.Err() != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"message": "Username does not exist",
-		})
+	user, err := database.CheckUserFromUserID(ctx, c, userID)
+	if err != nil {
 		return
-	}
-
-	//Decoding user
-	var user database.User
-	if err := result.Decode(&user); err != nil {
-		log.Fatal(err)
 	}
 
 	commentContainer.UserName = user.Username

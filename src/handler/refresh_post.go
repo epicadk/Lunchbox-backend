@@ -5,7 +5,6 @@ import (
 	"github.com/epicadk/Lunchbox-backend/src/database"
 	"github.com/epicadk/Lunchbox-backend/src/utils"
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"net/http"
 	"time"
@@ -16,42 +15,23 @@ type RefreshResponse struct {
 }
 
 func RefreshPost(c *gin.Context) {
+
 	RefreshToken := c.Request.Header.Get("Authorization")
 	log.Println(c.Request.Header)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	client := database.MongoClient(ctx)
-	id := utils.GetUserID(RefreshToken)
-	objectId, err := primitive.ObjectIDFromHex(id)
+	id, err := utils.GetUserID(RefreshToken)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+		c.AbortWithStatusJSON(400, gin.H{
 			"message": "Invalid Refresh Token",
 		})
 		return
 	}
 
-	collection := client.Database("Lunchbox").Collection("Users")
-	result := collection.FindOne(ctx, database.User{ID: objectId})
-
-	if result.Err() != nil {
-		if result.Err().Error() == "mongo: no documents in result" {
-			c.AbortWithStatusJSON(401, gin.H{
-				"message": "Invalid Refresh Token",
-			})
-		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"message": http.StatusText(http.StatusInternalServerError),
-			})
-		}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	user, err := database.CheckUserFromUserID(ctx, c, id)
+	if err != nil {
 		return
 	}
-
-	//Decoding user
-	var user database.User
-	if err := result.Decode(&user); err != nil {
-		log.Fatal(err)
-	}
-
 	verified, err := utils.VerifyRefreshToken(RefreshToken, user.Password)
 	if err != nil {
 		if err.Error() == "Refresh Token is expired" {
@@ -66,7 +46,7 @@ func RefreshPost(c *gin.Context) {
 		return
 	}
 
-	newToken, err := utils.GenerateJWT(user.ID.String())
+	newToken, err := utils.GenerateJWT(user.ID)
 
 	if err != nil {
 		respondWithError(c, 500, http.StatusText(500))

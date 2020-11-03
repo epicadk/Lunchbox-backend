@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 )
 
 //GenerateJWT generates JWT token
-func GenerateJWT(id string) (string, error) {
+func GenerateJWT(id primitive.ObjectID) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
@@ -26,7 +27,7 @@ func GenerateJWT(id string) (string, error) {
 	return tokenString, nil
 }
 
-func GenerateRefreshJWT(id, hashedPass string) (string, error) {
+func GenerateRefreshJWT(id primitive.ObjectID, hashedPass string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
@@ -81,11 +82,11 @@ func VerifyAuthToken(header string) (bool, error) {
 	return false, nil
 }
 
-func GetUserID(header string) string {
+func GetUserID(header string) (primitive.ObjectID, error) {
 	claims := jwt.MapClaims{}
 	_, _, err := new(jwt.Parser).ParseUnverified(header, claims)
 	if err != nil {
-		log.Fatal(err)
+		return [12]byte{}, err
 	}
-	return fmt.Sprint(claims["client"])
+	return primitive.ObjectIDFromHex(fmt.Sprint(claims["client"]))
 }

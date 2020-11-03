@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"time"
 
@@ -36,12 +35,9 @@ func FavRestaurantPost(c *gin.Context) {
 		})
 		return
 	}
-	userID := utils.GetUserID(token)
-	objectID, err := primitive.ObjectIDFromHex(userID)
+	userID, err := utils.GetUserID(token)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"message": http.StatusText(http.StatusUnauthorized),
-		})
+		respondWithError(c, 401, "Invalid AuthToken")
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -49,22 +45,10 @@ func FavRestaurantPost(c *gin.Context) {
 	client := database.MongoClient(ctx)
 
 	// Checking if user Exists
-
-	userCollection := client.Database("Lunchbox").Collection("Users")
-	result := userCollection.FindOne(ctx, database.User{ID: objectID})
-	if result.Err() != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"message": "Username does not exist",
-			"error":   result.Err(),
-		})
+	_, err = database.CheckUserFromUserID(ctx, c, userID)
+	if err != nil {
+		respondWithError(c, 500, "Internal Server Error")
 		return
-	}
-
-	//Decoding user
-
-	var user database.User
-	if err := result.Decode(&user); err != nil {
-		log.Fatal(err)
 	}
 
 	//InsertComments in database
@@ -79,7 +63,7 @@ func FavRestaurantPost(c *gin.Context) {
 		Upsert:         &upsert,
 		ReturnDocument: &after,
 	}
-	res := favsCollection.FindOneAndUpdate(ctx, UserFavs{UserId: objectID}, update, &opt)
+	res := favsCollection.FindOneAndUpdate(ctx, UserFavs{UserId: userID}, update, &opt)
 
 	if res.Err() != nil {
 		c.AbortWithStatusJSON(400, gin.H{

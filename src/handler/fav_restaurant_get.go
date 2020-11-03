@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"github.com/epicadk/Lunchbox-backend/src/database"
-	"log"
 	"net/http"
 	"time"
 
@@ -21,26 +20,13 @@ func FavouriteRestaurantGet(c *gin.Context) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	client := database.MongoClient(ctx)
-	userCollection := client.Database("Lunchbox").Collection("Users")
-	result := userCollection.FindOne(ctx, database.User{Username: username})
-
-	if result.Err() != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"message": "Username does not exist",
-			"error":   result.Err(),
-			"result":  result,
-		})
+	user, err := database.CheckUserFromUsername(ctx, c, username)
+	if err != nil {
 		return
 	}
-	//Decoding user
-	var user database.User
-	if err := result.Decode(&user); err != nil {
-		log.Fatal(err)
-	}
-
+	client := database.MongoClient(ctx)
 	dataCollection := client.Database("Lunchbox").Collection("UserData")
-	result = dataCollection.FindOne(ctx, database.UserFavouriteRestaurants{UserId: user.ID})
+	result := dataCollection.FindOne(ctx, database.UserFavouriteRestaurants{UserId: user.ID})
 
 	if result.Err() != nil {
 		c.AbortWithStatusJSON(500, gin.H{

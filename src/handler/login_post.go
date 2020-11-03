@@ -37,28 +37,9 @@ func LoginPost(c *gin.Context) {
 	//TODO add password validation here
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	client := database.MongoClient(ctx)
-
-	// Checking if user Exists
-	collection := client.Database("Lunchbox").Collection("Users")
-	result := collection.FindOne(ctx, database.User{Username: request.Username})
-
-	if result.Err() != nil {
-		if result.Err().Error() == "mongo: no documents in result" {
-			c.AbortWithStatusJSON(400, gin.H{
-				"message": "Username does not exist",
-			})
-		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"message": http.StatusText(http.StatusInternalServerError),
-			})
-		}
+	user, err := database.CheckUserFromUsername(ctx, c, request.Username)
+	if err != nil {
 		return
-	}
-	//Decoding user
-	var user database.User
-	if err := result.Decode(&user); err != nil {
-		log.Fatal(err)
 	}
 
 	if !comparePasswords(user.Password, request.Password) {
@@ -67,20 +48,21 @@ func LoginPost(c *gin.Context) {
 		})
 		return
 	}
+
 	//Generating Auth Token
-	token, err := utils.GenerateJWT(user.ID.Hex())
+	token, err := utils.GenerateJWT(user.ID)
 	if err != nil {
 		c.AbortWithStatusJSON(500, gin.H{
 			"message": http.StatusText(500),
 		})
 		log.Fatal(err.Error())
 	}
-	RefreshToken, err := utils.GenerateRefreshJWT(user.ID.Hex(), user.Password)
+	RefreshToken, err := utils.GenerateRefreshJWT(user.ID, user.Password)
 	if err != nil {
 		c.AbortWithStatusJSON(500, gin.H{
 			"message": http.StatusText(500),
 		})
-		log.Fatal(err.Error())
+		return
 	}
 
 	//Final Response if all is okay
