@@ -11,8 +11,9 @@ import (
 )
 
 func CommentsGet(c *gin.Context) {
-	resId := c.Query("resID")
-	if _, err := strconv.Atoi(resId); resId == "" || err != nil {
+	tresId := c.Query("resID")
+	resId, err := strconv.Atoi(tresId)
+	if err != nil {
 		utils.RespondWithQuickError(c, 400)
 		return
 	}

@@ -11,7 +11,7 @@ type User struct {
 
 type UserFavouriteRestaurants struct {
 	Id        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	FavResIds []int64            `json:"fav_res_ids,omitempty" bson:"fav_res_ids,omitempty"`
+	FavResIds []int              `json:"fav_res_ids,omitempty" bson:"fav_res_ids,omitempty"`
 	UserId    primitive.ObjectID `json:"user_id,omitempty" bson:"user_id,omitempty"`
 }
 
@@ -20,6 +20,6 @@ type CommentsContainer struct {
 	UserID      primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
 	Comment     string             `json:"comment" bson:"comment,omitempty"`
 	Title       string             `json:"title" bson:"title,omitempty"`
-	ZomatoResID string             `json:"zomato_res_id" bson:"zomato_res_id,omitempty"`
+	ZomatoResID int                `json:"zomato_res_id" bson:"zomato_res_id,omitempty"`
 	UserName    string             `json:"user_name,omitempty" bson:"user_name,omitempty"`
 }
