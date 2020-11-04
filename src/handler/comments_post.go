@@ -33,7 +33,7 @@ func CommentsPost(c *gin.Context) {
 
 	userID, err := utils.GetUserID(token)
 	if err != nil {
-		respondWithError(c, 400, "Invalid AuthToken")
+		utils.RespondWithError(c, 400, "Invalid AuthToken")
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -41,12 +41,6 @@ func CommentsPost(c *gin.Context) {
 	client := database.MongoClient(ctx)
 
 	var commentContainer database.CommentsContainer
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"message": http.StatusText(http.StatusUnauthorized),
-		})
-		return
-	}
 
 	commentContainer.UserID = userID
 	commentContainer.Comment = request.Comment
@@ -64,9 +58,7 @@ func CommentsPost(c *gin.Context) {
 	commentCollection := client.Database("Lunchbox").Collection("Comments")
 	_, err = commentCollection.InsertOne(ctx, commentContainer)
 	if err != nil {
-		c.AbortWithStatusJSON(500, gin.H{
-			"error": http.StatusText(500),
-		})
+		utils.RespondWithQuickError(c, 500)
 		return
 	}
 	c.JSON(200, gin.H{

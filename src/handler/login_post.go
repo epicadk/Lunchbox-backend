@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"time"
 
@@ -29,9 +28,7 @@ type LoginResponse struct {
 func LoginPost(c *gin.Context) {
 	var request LoginRequest
 	if err := c.ShouldBindJSON(&request); err != nil || request.Username == "" || request.Password == "" {
-		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
-			"message": http.StatusText(http.StatusUnprocessableEntity),
-		})
+		utils.RespondWithQuickError(c, 400)
 		return
 	}
 	//TODO add password validation here
@@ -43,25 +40,18 @@ func LoginPost(c *gin.Context) {
 	}
 
 	if !comparePasswords(user.Password, request.Password) {
-		c.AbortWithStatusJSON(400, gin.H{
-			"message": "Password incorrect",
-		})
+		utils.RespondWithError(c, http.StatusUnauthorized, "Password is incorrect")
 		return
 	}
 
 	//Generating Auth Token
 	token, err := utils.GenerateJWT(user.ID)
 	if err != nil {
-		c.AbortWithStatusJSON(500, gin.H{
-			"message": http.StatusText(500),
-		})
-		log.Fatal(err.Error())
+		utils.RespondWithQuickError(c, 500)
 	}
 	RefreshToken, err := utils.GenerateRefreshJWT(user.ID, user.Password)
 	if err != nil {
-		c.AbortWithStatusJSON(500, gin.H{
-			"message": http.StatusText(500),
-		})
+		utils.RespondWithQuickError(c, 500)
 		return
 	}
 

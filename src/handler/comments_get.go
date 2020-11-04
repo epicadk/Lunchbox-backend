@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/epicadk/Lunchbox-backend/src/database"
+	"github.com/epicadk/Lunchbox-backend/src/utils"
 	"github.com/gin-gonic/gin"
-	"log"
-	"net/http"
 	"strconv"
 	"time"
 )
@@ -14,9 +13,7 @@ import (
 func CommentsGet(c *gin.Context) {
 	resId := c.Query("resID")
 	if _, err := strconv.Atoi(resId); resId == "" || err != nil {
-		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
-			"message": http.StatusText(http.StatusUnprocessableEntity),
-		})
+		utils.RespondWithQuickError(c, 400)
 		return
 	}
 
@@ -28,9 +25,7 @@ func CommentsGet(c *gin.Context) {
 	cursor, err := commentsCollection.Find(ctx, database.CommentsContainer{ZomatoResID: resId})
 
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"message": err.Error(),
-		})
+		utils.RespondWithQuickError(c, 500)
 		return
 	}
 	defer cursor.Close(ctx)
@@ -38,7 +33,8 @@ func CommentsGet(c *gin.Context) {
 	for cursor.Next(ctx) {
 		var comment database.CommentsContainer
 		if err = cursor.Decode(&comment); err != nil {
-			log.Fatal(err)
+			utils.RespondWithQuickError(c, 500)
+			return
 		}
 		fmt.Println(comments)
 		comments = append(comments, comment)

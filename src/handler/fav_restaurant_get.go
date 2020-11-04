@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"github.com/epicadk/Lunchbox-backend/src/database"
+	"github.com/epicadk/Lunchbox-backend/src/utils"
 	"net/http"
 	"time"
 
@@ -13,10 +14,7 @@ func FavouriteRestaurantGet(c *gin.Context) {
 	//TODO change to url param
 	username := c.Query("username")
 	if username == "" {
-		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
-			"message": http.StatusText(http.StatusUnprocessableEntity),
-		})
-		return
+		utils.RespondWithQuickError(c, 400)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -29,17 +27,12 @@ func FavouriteRestaurantGet(c *gin.Context) {
 	result := dataCollection.FindOne(ctx, database.UserFavouriteRestaurants{UserId: user.ID})
 
 	if result.Err() != nil {
-		c.AbortWithStatusJSON(500, gin.H{
-			"message": result.Err().Error(),
-		})
+		utils.RespondWithError(c, http.StatusNotFound, "No Favourite Restaurants Found For User")
 		return
 	}
 	var favs database.UserFavouriteRestaurants
 	if err := result.Decode(&favs); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"message": http.StatusText(http.StatusInternalServerError),
-			"error":   err.Error(),
-		})
+		utils.RespondWithQuickError(c, 500)
 		return
 	}
 

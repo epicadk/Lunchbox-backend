@@ -30,14 +30,15 @@ func FavRestaurantPost(c *gin.Context) {
 	var request UserFavouritePostRequest
 	token := c.GetHeader("Authorization")
 	if err := c.ShouldBindJSON(&request); err != nil || request.Favourite == 0 {
-		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
-			"message": http.StatusText(http.StatusUnprocessableEntity),
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": http.StatusText(http.StatusBadRequest),
 		})
 		return
 	}
 	userID, err := utils.GetUserID(token)
+	//Possible only when Someone has cracked the secret
 	if err != nil {
-		respondWithError(c, 401, "Invalid AuthToken")
+		utils.RespondWithError(c, 401, "Invalid AuthToken")
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -47,7 +48,7 @@ func FavRestaurantPost(c *gin.Context) {
 	// Checking if user Exists
 	_, err = database.CheckUserFromUserID(ctx, c, userID)
 	if err != nil {
-		respondWithError(c, 500, "Internal Server Error")
+		utils.RespondWithQuickError(c, 500)
 		return
 	}
 
@@ -66,10 +67,7 @@ func FavRestaurantPost(c *gin.Context) {
 	res := favsCollection.FindOneAndUpdate(ctx, UserFavs{UserId: userID}, update, &opt)
 
 	if res.Err() != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"message": "Username does not exist result error",
-			"error":   res.Err().Error(),
-		})
+		utils.RespondWithQuickError(c, 500)
 		return
 	}
 	c.JSON(200, gin.H{

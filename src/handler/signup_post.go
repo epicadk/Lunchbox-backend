@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"time"
 
@@ -29,18 +28,14 @@ func SignupPost(c *gin.Context) {
 	var user database.User
 	err := c.ShouldBindJSON(&user)
 	if err != nil || user.Username == "" || user.Phone == 0 || user.Password == "" {
-		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
-			"message": http.StatusText(http.StatusUnprocessableEntity),
-		})
+		utils.RespondWithQuickError(c, 400)
 		return
 	}
 	//TODO add password validation
 	user.Password, err = hashPassword(user.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": http.StatusText(http.StatusInternalServerError),
-			"error":   err.Error(),
-		})
+		utils.RespondWithError(c, 400, err.Error())
+		return
 	}
 	// Connecting to MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -51,35 +46,26 @@ func SignupPost(c *gin.Context) {
 	collection := client.Database("Lunchbox").Collection("Users")
 
 	if result := collection.FindOne(ctx, database.User{Username: user.Username}); result.Err() == nil {
-		c.AbortWithStatusJSON(http.StatusConflict, gin.H{
-			"message": "Username already exists",
-		})
+		utils.RespondWithError(c, http.StatusConflict, "Username already exists")
 		return
 	}
 	// If user does not exists add user to database and return info
 	result, err := collection.InsertOne(ctx, user)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"message": http.StatusText(http.StatusInternalServerError),
-			"mes":     err.Error(),
-		})
+		utils.RespondWithQuickError(c, 500)
 		return
 	}
 	user.ID = result.InsertedID.(primitive.ObjectID)
 	//Generate Auth Token For current User
 	token, err := utils.GenerateJWT(user.ID)
 	if err != nil {
-		c.AbortWithStatusJSON(500, gin.H{
-			"message": http.StatusText(500),
-		})
+		utils.RespondWithQuickError(c, 500)
 		return
 	}
 	RefreshToken, err := utils.GenerateRefreshJWT(user.ID, user.Password)
 	if err != nil {
-		c.AbortWithStatusJSON(500, gin.H{
-			"message": http.StatusText(500),
-		})
-		log.Fatal(err.Error())
+		utils.RespondWithQuickError(c, 500)
+		return
 	}
 	c.JSON(http.StatusCreated, SignupResponse{Message: "User Created", AuthToken: token, RefreshToken: RefreshToken})
 }
