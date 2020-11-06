@@ -27,7 +27,7 @@ func FavouriteRestaurantGet(c *gin.Context) {
 	result := dataCollection.FindOne(ctx, database.UserFavouriteRestaurants{UserId: user.ID})
 
 	if result.Err() != nil {
-		utils.RespondWithError(c, http.StatusNotFound, "No Favourite Restaurants Found For User")
+		utils.RespondWithError(c, http.StatusNoContent, "No Favourite Restaurants Found For User")
 		return
 	}
 	var favs database.UserFavouriteRestaurants

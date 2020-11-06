@@ -19,7 +19,8 @@ func main() {
 
 	r.POST("/validate", handler.AuthTokenPost)
 	r.POST("/comments", handler.CommentsPost)
-	r.GET("/comments", handler.CommentsGet)
+	r.GET("/restaurant/comments", handler.CommentsGet)
+	r.GET("/user/comments", handler.RecentActivityGet)
 	r.POST("/fav", handler.FavRestaurantPost)
 	r.GET("/fav", handler.FavouriteRestaurantGet)
 	r.Run() //default is 8080

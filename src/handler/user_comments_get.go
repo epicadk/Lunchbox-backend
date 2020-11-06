@@ -2,32 +2,31 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"github.com/epicadk/Lunchbox-backend/src/database"
 	"github.com/epicadk/Lunchbox-backend/src/utils"
 	"github.com/gin-gonic/gin"
-	"strconv"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
-func CommentsGet(c *gin.Context) {
-	tresId := c.Query("resID")
-	resId, err := strconv.Atoi(tresId)
-	if err != nil {
-		utils.RespondWithQuickError(c, 400)
-		return
-	}
+func RecentActivityGet(c *gin.Context) {
+	username := c.Query("user")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	client := database.MongoClient(ctx)
-
-	commentsCollection := client.Database("Lunchbox").Collection("Comments")
-	cursor, err := commentsCollection.Find(ctx, database.CommentsContainer{ZomatoResID: resId})
+	user, err := database.CheckUserFromUsername(ctx, c, username)
 
 	if err != nil {
-		utils.RespondWithQuickError(c, 204)
 		return
+	}
+
+	client := database.MongoClient(ctx)
+	commentsCollection := client.Database("Lunchbox").Collection("Comments")
+	option := options.Find()
+	option.SetLimit(10)
+	cursor, err := commentsCollection.Find(ctx, database.CommentsContainer{UserID: user.ID}, option)
+	if err != nil {
+		utils.RespondWithQuickError(c, 204)
 	}
 
 	defer cursor.Close(ctx)
@@ -38,11 +37,11 @@ func CommentsGet(c *gin.Context) {
 			utils.RespondWithQuickError(c, 500)
 			return
 		}
-		fmt.Println(comments)
 		comments = append(comments, comment)
 	}
 
 	c.JSON(200, gin.H{
 		"comments": comments,
 	})
+
 }
