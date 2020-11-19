@@ -108,7 +108,7 @@ func DeleteCommentByCommentId(ctx context.Context, c *gin.Context, commentID pri
 		return false
 	}
 	if res.DeletedCount != 1 {
-		utils.RespondWithQuickError(c, http.StatusNoContent)
+		utils.RespondWithError(c, http.StatusNotFound, "Comment Not Found")
 		return false
 	}
 	return true
@@ -132,9 +132,8 @@ func UpdateCommentByCommentId(ctx context.Context, c *gin.Context, commentID pri
 	}
 	res := commentsCollection.FindOneAndUpdate(ctx, CommentsContainer{ID: commentID, UserID: userid}, update, &opt)
 	if res.Err() != nil {
-		utils.RespondWithQuickError(c, http.StatusInternalServerError)
+		utils.RespondWithError(c, http.StatusInternalServerError, res.Err().Error())
 		return false
-
 	}
 	return true
 }

@@ -43,7 +43,7 @@ func CommentsPut(c *gin.Context) {
 	if !success {
 		return
 	}
-	c.JSON(204, gin.H{
+	c.JSON(200, gin.H{
 		"message": "Comment Updated",
 	})
 

@@ -18,12 +18,17 @@ func main() {
 	r.Use(middleware.TokenAuthMiddleware)
 
 	r.POST("/validate", handler.AuthTokenPost)
+
+	// Comments endpoints
 	r.POST("/comments", handler.CommentsPost)
+	r.DELETE("/comments", handler.CommentsDelete)
+	r.PUT("/comments", handler.CommentsPut)
 	r.GET("/restaurant/comments", handler.CommentsGet)
 	r.GET("/user/comments", handler.RecentActivityGet)
+
+	// User Favourite Restaurants endpoints
 	r.POST("/fav", handler.FavRestaurantPost)
 	r.GET("/fav", handler.FavouriteRestaurantGet)
-	r.DELETE("/comments", handler.CommentsDelete)
-	r.PUT("/comments", handler.CommentsGet)
+
 	_ = r.Run() //default is 8080
 }

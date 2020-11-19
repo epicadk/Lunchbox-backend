@@ -11,7 +11,7 @@ import (
 )
 
 type CommentDeleteRequest struct {
-	CommentId string `json:"commentid"`
+	CommentId string `json:"comment_id"`
 }
 
 func CommentsDelete(c *gin.Context) {
@@ -21,18 +21,18 @@ func CommentsDelete(c *gin.Context) {
 		utils.RespondWithQuickError(c, http.StatusBadRequest)
 		return
 	}
-	commentid, err := primitive.ObjectIDFromHex(request.CommentId)
+	commentId, err := primitive.ObjectIDFromHex(request.CommentId)
 	if err != nil {
 		utils.RespondWithError(c, http.StatusBadRequest, "Invalid Comment ID")
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	success := database.DeleteCommentByCommentId(ctx, c, commentid, token)
+	success := database.DeleteCommentByCommentId(ctx, c, commentId, token)
 	if !success {
 		return
 	}
-	c.JSON(204, gin.H{
+	c.JSON(200, gin.H{
 		"message": "Comment Deleted",
 	})
 }
