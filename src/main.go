@@ -23,5 +23,7 @@ func main() {
 	r.GET("/user/comments", handler.RecentActivityGet)
 	r.POST("/fav", handler.FavRestaurantPost)
 	r.GET("/fav", handler.FavouriteRestaurantGet)
-	r.Run() //default is 8080
+	r.DELETE("/comments", handler.CommentsDelete)
+	r.PUT("/comments", handler.CommentsGet)
+	_ = r.Run() //default is 8080
 }
