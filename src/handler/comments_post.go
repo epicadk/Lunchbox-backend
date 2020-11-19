@@ -13,7 +13,7 @@ import (
 
 type CommentContainerPostRequest struct {
 	Comment     string `json:"comment"`
-	Title       string `json:"title"`
+	Rating      int    `json:"rating"`
 	ZomatoResID int    `json:"zomato_res_id"`
 }
 
@@ -24,7 +24,7 @@ func CommentsPost(c *gin.Context) {
 	var request CommentContainerPostRequest
 	token := c.GetHeader("Authorization")
 
-	if err := c.ShouldBindJSON(&request); err != nil || request.Comment == "" || request.Title == "" || request.ZomatoResID == 0 {
+	if err := c.ShouldBindJSON(&request); err != nil || request.Comment == "" || request.Rating == 0 || request.ZomatoResID == 0 {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": http.StatusText(http.StatusUnprocessableEntity),
 		})
@@ -45,7 +45,7 @@ func CommentsPost(c *gin.Context) {
 	commentContainer.UserID = userID
 	commentContainer.Comment = request.Comment
 	commentContainer.ZomatoResID = request.ZomatoResID
-	commentContainer.Title = request.Title
+	commentContainer.Rating = request.Rating
 
 	user, err := database.CheckUserFromUserID(ctx, c, userID)
 	if err != nil {
