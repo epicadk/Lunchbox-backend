@@ -74,23 +74,40 @@ func CheckUserFromUserID(ctx context.Context, c *gin.Context, UserID primitive.O
 	return user, nil
 }
 
-func GetCommentByCommentId(ctx context.Context, c *gin.Context, commentID primitive.ObjectID) (CommentsContainer, error) {
+func CheckIfUserCanComment(ctx context.Context, c *gin.Context, userID primitive.ObjectID, resID int) (int64, error) {
 	client := MongoClient(ctx)
-	var result CommentsContainer
 
+	limit := int64(1)
+	ops := options.CountOptions{Limit: &limit}
 	commentsCollection := client.Database("Lunchbox").Collection("Comments")
-	res := commentsCollection.FindOne(ctx, CommentsContainer{ID: commentID})
-	if res.Err() != nil {
-		utils.RespondWithQuickError(c, http.StatusNoContent)
-		return result, res.Err()
-	}
-	if err := res.Decode(result); err != nil {
+	result, err := commentsCollection.CountDocuments(ctx, CommentsContainer{UserID: userID, ZomatoResID: resID}, &ops)
+
+	if err != nil {
 		utils.RespondWithQuickError(c, http.StatusInternalServerError)
-		return result, err
+		return -1, err
 	}
 	return result, nil
 }
+func FindCommentByUserID(ctx context.Context, c *gin.Context, token string, resID int) (CommentsContainer, error) {
+	client := MongoClient(ctx)
+	userid, err := utils.GetUserID(token)
+	var comment CommentsContainer
+	if err != nil {
+		utils.RespondWithQuickError(c, http.StatusInternalServerError)
+	}
+	commentsCollection := client.Database("Lunchbox").Collection("Comments")
+	result := commentsCollection.FindOne(ctx, CommentsContainer{UserID: userid, ZomatoResID: resID})
+	if result.Err().Error() != "mongo: no documents in result" {
+		utils.RespondWithQuickError(c, http.StatusInternalServerError)
+		return CommentsContainer{}, nil
+	}
 
+	if err := result.Decode(&comment); err != nil {
+		utils.RespondWithQuickError(c, http.StatusInternalServerError)
+		return CommentsContainer{}, err
+	}
+	return comment, err
+}
 func DeleteCommentByCommentId(ctx context.Context, c *gin.Context, commentID primitive.ObjectID, token string) bool {
 	client := MongoClient(ctx)
 	userid, err := utils.GetUserID(token)

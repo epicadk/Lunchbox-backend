@@ -42,6 +42,15 @@ func CommentsPost(c *gin.Context) {
 
 	var commentContainer database.CommentsContainer
 
+	userComment, err := database.CheckIfUserCanComment(ctx, c, userID, request.ZomatoResID)
+
+	if err != nil {
+		return
+	}
+	if userComment != 0 {
+		utils.RespondWithError(c, http.StatusNotAcceptable, "You have already commented before please edit or delete the comment")
+		return
+	}
 	commentContainer.UserID = userID
 	commentContainer.Comment = request.Comment
 	commentContainer.ZomatoResID = request.ZomatoResID

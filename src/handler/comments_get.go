@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+type CommentsGetResponse struct {
+	Comments    []database.CommentsContainer `json:"comments"`
+	UserComment database.CommentsContainer   `json:"user_comment,omitempty"`
+}
+
 func CommentsGet(c *gin.Context) {
 	tresId := c.Query("resID")
 	resId, err := strconv.Atoi(tresId)
@@ -22,6 +27,10 @@ func CommentsGet(c *gin.Context) {
 	defer cancel()
 	client := database.MongoClient(ctx)
 
+	userComment, err := database.FindCommentByUserID(ctx, c, c.GetHeader("Authorization"), resId)
+	if err != nil {
+		return
+	}
 	commentsCollection := client.Database("Lunchbox").Collection("Comments")
 	cursor, err := commentsCollection.Find(ctx, database.CommentsContainer{ZomatoResID: resId})
 
@@ -42,7 +51,5 @@ func CommentsGet(c *gin.Context) {
 		comments = append(comments, comment)
 	}
 
-	c.JSON(200, gin.H{
-		"comments": comments,
-	})
+	c.JSON(200, CommentsGetResponse{Comments: comments, UserComment: userComment})
 }
